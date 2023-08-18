@@ -40,31 +40,31 @@ class User extends Model {
 	/**
 	 * Stores the WP_User object for the incoming data
 	 *
-	 * @var WP_User $data
+	 * @var \WP_User $data
 	 */
 	protected $data;
 
 	/**
 	 * The Global Post at time of Model generation
 	 *
-	 * @var WP_Post
+	 * @var \WP_Post
 	 */
 	protected $global_post;
 
 	/**
 	 * The global authordata at time of Model generation
 	 *
-	 * @var WP_User
+	 * @var \WP_User
 	 */
 	protected $global_authordata;
 
 	/**
 	 * User constructor.
 	 *
-	 * @param WP_User $user The incoming WP_User object that needs modeling
+	 * @param \WP_User $user The incoming WP_User object that needs modeling
 	 *
 	 * @return void
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function __construct( WP_User $user ) {
 
@@ -185,7 +185,7 @@ class User extends Model {
 						$capabilities = array_keys(
 							array_filter(
 								$this->data->allcaps,
-								function ( $cap ) {
+								static function ( $cap ) {
 									return true === $cap;
 								}
 							)
@@ -244,13 +244,18 @@ class User extends Model {
 
 					return ! empty( $user_locale ) ? $user_locale : null;
 				},
+				'shouldShowAdminToolbar'   => function () {
+					$toolbar_preference_meta = get_user_meta( $this->data->ID, 'show_admin_bar_front', true );
+
+					return 'true' === $toolbar_preference_meta ? true : false;
+				},
 				'userId'                   => ! empty( $this->data->ID ) ? absint( $this->data->ID ) : null,
 				'uri'                      => function () {
 					$user_profile_url = get_author_posts_url( $this->data->ID );
 
 					return ! empty( $user_profile_url ) ? str_ireplace( home_url(), '', $user_profile_url ) : '';
 				},
-				'enqueuedScriptsQueue'     => function () {
+				'enqueuedScriptsQueue'     => static function () {
 					global $wp_scripts;
 					do_action( 'wp_enqueue_scripts' );
 					$queue = $wp_scripts->queue;
@@ -259,7 +264,7 @@ class User extends Model {
 
 					return $queue;
 				},
-				'enqueuedStylesheetsQueue' => function () {
+				'enqueuedStylesheetsQueue' => static function () {
 					global $wp_styles;
 					do_action( 'wp_enqueue_scripts' );
 					$queue = $wp_styles->queue;

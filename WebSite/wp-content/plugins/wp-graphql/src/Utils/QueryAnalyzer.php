@@ -4,10 +4,15 @@ namespace WPGraphQL\Utils;
 
 use Exception;
 use GraphQL\Error\SyntaxError;
+use GraphQL\Language\AST\Node;
+use GraphQL\Language\AST\TypeDefinitionNode;
 use GraphQL\Language\Parser;
 use GraphQL\Language\Visitor;
 use GraphQL\Server\OperationParams;
+use GraphQL\Type\Definition\FieldDefinition;
 use GraphQL\Type\Definition\InterfaceType;
+use GraphQL\Type\Definition\ListOfType;
+use GraphQL\Type\Definition\NonNull;
 use GraphQL\Type\Definition\ObjectType;
 use GraphQL\Type\Definition\Type;
 use GraphQL\Type\Schema;
@@ -16,6 +21,7 @@ use GraphQLRelay\Relay;
 use Hoa\Math\Util;
 use WPGraphQL\Model\Model;
 use WPGraphQL\Request;
+use WPGraphQL\Type\WPConnectionType;
 use WPGraphQL\WPSchema;
 
 /**
@@ -32,7 +38,7 @@ use WPGraphQL\WPSchema;
 class QueryAnalyzer {
 
 	/**
-	 * @var Schema
+	 * @var \GraphQL\Type\Schema
 	 */
 	protected $schema;
 
@@ -46,7 +52,7 @@ class QueryAnalyzer {
 	/**
 	 * @var string
 	 */
-	protected $root_operation = 'Query';
+	protected $root_operation = '';
 
 	/**
 	 * Models that are referenced in the query
@@ -78,7 +84,7 @@ class QueryAnalyzer {
 	protected $query_id;
 
 	/**
-	 * @var Request
+	 * @var \WPGraphQL\Request
 	 */
 	protected $request;
 
@@ -103,7 +109,7 @@ class QueryAnalyzer {
 	protected $queried_list_types = [];
 
 	/**
-	 * @param Request $request The GraphQL request being executed
+	 * @param \WPGraphQL\Request $request The GraphQL request being executed
 	 */
 	public function __construct( Request $request ) {
 		$this->request       = $request;
@@ -115,7 +121,7 @@ class QueryAnalyzer {
 	}
 
 	/**
-	 * @return Request
+	 * @return \WPGraphQL\Request
 	 */
 	public function get_request(): Request {
 		return $this->request;
@@ -130,7 +136,7 @@ class QueryAnalyzer {
 		 * Filters whether to analyze queries or not
 		 *
 		 * @param bool          $should_analyze_queries Whether to analyze queries or not. Default true
-		 * @param QueryAnalyzer $query_analyzer         The QueryAnalyzer instance
+		 * @param \WPGraphQL\Utils\QueryAnalyzer $query_analyzer The QueryAnalyzer instance
 		 */
 		$should_analyze_queries = apply_filters( 'graphql_should_analyze_queries', true, $this );
 
@@ -183,12 +189,12 @@ class QueryAnalyzer {
 	 * @param ?string         $query     The GraphQL query
 	 * @param ?string         $operation The name of the operation
 	 * @param ?array          $variables Variables to be passed to your GraphQL request
-	 * @param OperationParams $params    The Operation Params. This includes any extra params, such
-	 *                                   as extenions or any other modifications to the request
-	 *                                   body
+	 * @param \GraphQL\Server\OperationParams $params The Operation Params. This includes any extra params, such
+ * as extenions or any other modifications to the request
+ * body
 	 *
 	 * @return void
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function determine_graphql_keys( ?string $query, ?string $operation, ?array $variables, OperationParams $params ): void {
 
@@ -213,7 +219,7 @@ class QueryAnalyzer {
 		$this->models        = $this->set_query_models( $this->schema, $query );
 
 		/**
-		 * @param QueryAnalyzer $query_analyzer The instance of the query analyzer
+		 * @param \WPGraphQL\Utils\QueryAnalyzer $query_analyzer The instance of the query analyzer
 		 * @param string        $query          The query string being executed
 		 */
 		do_action( 'graphql_determine_graphql_keys', $this, $query );
@@ -295,21 +301,77 @@ class QueryAnalyzer {
 		return $this->query_id;
 	}
 
+
+	/**
+	 * @param \GraphQL\Type\Definition\Type $type The Type of field
+	 * @param \GraphQL\Type\Definition\FieldDefinition $field_def The field definition the type is for
+	 * @param mixed $parent_type The Parent Type
+	 * @param bool $is_list_type Whether the field is a list type field
+	 *
+	 * @return  \GraphQL\Type\Definition\Type|String|null
+	 */
+	public static function get_wrapped_field_type( Type $type, FieldDefinition $field_def, $parent_type, bool $is_list_type = false ) {
+
+		if ( ! isset( $parent_type->name ) || 'RootQuery' !== $parent_type->name ) {
+			return null;
+		}
+
+		if ( $type instanceof NonNull || $type instanceof ListOfType ) {
+
+			if ( $type instanceof ListOfType && isset( $parent_type->name ) && 'RootQuery' === $parent_type->name ) {
+				$is_list_type = true;
+			}
+
+			return self::get_wrapped_field_type( $type->getWrappedType(), $field_def, $parent_type, $is_list_type );
+		}
+
+		// Determine if we're dealing with a connection
+		if ( $type instanceof ObjectType || $type instanceof InterfaceType ) {
+
+			$interfaces      = method_exists( $type, 'getInterfaces' ) ? $type->getInterfaces() : [];
+			$interface_names = ! empty( $interfaces ) ? array_map( static function ( InterfaceType $interface ) {
+				return $interface->name;
+			}, $interfaces ) : [];
+
+			if ( array_key_exists( 'Connection', $interface_names ) ) {
+
+				if ( isset( $field_def->config['fromType'] ) && ( 'rootquery' !== strtolower( $field_def->config['fromType'] ) ) ) {
+					return null;
+				}
+
+				$to_type = $field_def->config['toType'] ?? null;
+				if ( empty( $to_type ) ) {
+					return null;
+				}
+
+				return $to_type;
+			}
+
+			if ( ! $is_list_type ) {
+				return null;
+			}
+
+			return $type;
+		}
+
+		return null;
+	}
+
 	/**
 	 * Given the Schema and a query string, return a list of GraphQL Types that are being asked for
 	 * by the query.
 	 *
-	 * @param ?Schema $schema The WPGraphQL Schema
+	 * @param ?\GraphQL\Type\Schema $schema The WPGraphQL Schema
 	 * @param ?string $query  The query string
 	 *
 	 * @return array
-	 * @throws SyntaxError|Exception
+	 * @throws \GraphQL\Error\SyntaxError|\Exception
 	 */
 	public function set_list_types( ?Schema $schema, ?string $query ): array {
 
 		/**
 		 * @param array|null $null   Default value for the filter
-		 * @param ?Schema    $schema The WPGraphQL Schema for the current request
+		 * @param ?\GraphQL\Type\Schema $schema The WPGraphQL Schema for the current request
 		 * @param ?string    $query  The query string being requested
 		 */
 		$null               = null;
@@ -333,74 +395,58 @@ class QueryAnalyzer {
 		$type_info = new TypeInfo( $schema );
 
 		$visitor = [
-			'enter' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
+			'enter' => static function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
+				$parent_type = $type_info->getParentType();
+
+				if ( 'Field' !== $node->kind ) {
+					Visitor::skipNode();
+				}
 
 				$type_info->enter( $node );
-				$type = $type_info->getType();
+				$field_def = $type_info->getFieldDef();
 
-				if ( ! $type ) {
+				if ( ! $field_def instanceof FieldDefinition ) {
 					return;
 				}
 
-				if ( ! isset( $node->kind ) || 'Field' !== $node->kind ) {
+				// Determine the wrapped type, which also determines if it's a listOf
+				$field_type = $field_def->getType();
+				$field_type = self::get_wrapped_field_type( $field_type, $field_def, $parent_type );
+
+				if ( null === $field_type ) {
 					return;
 				}
 
-				// If a type is queried as a list, add it to the queried_list_types
-				if ( false !== strpos( $type, '[' ) && false !== strpos( $type, ']' ) ) {
-					$this->queried_list_types[] = Type::getNamedType( $type );
+				if ( ! empty( $field_type ) && is_string( $field_type ) ) {
+					$field_type = $schema->getType( ucfirst( $field_type ) );
 				}
 
-				$named_type = Type::getNamedType( $type );
-
-				if ( ! $named_type instanceof ObjectType && ! $named_type instanceof InterfaceType ) {
+				if ( ! $field_type ) {
 					return;
 				}
 
-				$interfaces = $named_type->getInterfaces();
+				$field_type = $schema->getType( $field_type );
 
-				if ( empty( $interfaces ) ) {
-					return;
-				}
-
-				// Get the interface names
-				$interface_names = array_keys( $interfaces );
-
-				// If the Node interface isn't applied, it's not a node type
-				if ( ! in_array( 'Node', $interface_names, true ) ) {
-					return;
-				}
-
-				// Get the parent type info
-				$parent_type       = $type_info->getParentType();
-				$parent_named_type = null;
-
-				// If the type has a parent, get the "named type" of the parent type (i.e. instead of [Post!]!, get Post)
-				if ( null !== $parent_type ) {
-					$parent_named_type = Type::getNamedType( $parent_type );
-				}
-
-				// If the node type hasn't been queried directly as a list or as a nested field
-				// of a list, we can consider it not queried as a list
-				if ( ! in_array( $parent_named_type, $this->queried_list_types, true ) && ! in_array( $named_type, $this->queried_list_types, true ) ) {
+				if ( ! $field_type instanceof ObjectType && ! $field_type instanceof InterfaceType ) {
 					return;
 				}
 
 				// If the type being queried is an interface (i.e. ContentNode) the publishing a new
 				// item of any of the possible types (post, page, etc) should invalidate
 				// this query, so we need to tag this query with `list:$possible_type` for each possible type
-				if ( $named_type instanceof InterfaceType ) {
-					$possible_types = $schema->getPossibleTypes( $named_type );
+				if ( $field_type instanceof InterfaceType ) {
+					$possible_types = $schema->getPossibleTypes( $field_type );
 					if ( ! empty( $possible_types ) ) {
 						foreach ( $possible_types as $possible_type ) {
 							$type_map[] = 'list:' . strtolower( $possible_type );
 						}
 					}
 				} else {
-					$type_map[] = 'list:' . strtolower( $named_type );
+					$type_map[] = 'list:' . strtolower( $field_type );
 				}
+
 			},
-			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
+			'leave' => static function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
 				$type_info->leave( $node );
 			},
 		];
@@ -416,17 +462,17 @@ class QueryAnalyzer {
 	 * Given the Schema and a query string, return a list of GraphQL Types that are being asked for
 	 * by the query.
 	 *
-	 * @param ?Schema $schema The WPGraphQL Schema
+	 * @param ?\GraphQL\Type\Schema $schema The WPGraphQL Schema
 	 * @param ?string $query  The query string
 	 *
 	 * @return array
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function set_query_types( ?Schema $schema, ?string $query ): array {
 
 		/**
 		 * @param array|null $null   Default value for the filter
-		 * @param ?Schema    $schema The WPGraphQL Schema for the current request
+		 * @param ?\GraphQL\Type\Schema $schema The WPGraphQL Schema for the current request
 		 * @param ?string    $query  The query string being requested
 		 */
 		$null                = null;
@@ -480,7 +526,7 @@ class QueryAnalyzer {
 					$type_map[] = strtolower( $named_type );
 				}
 			},
-			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
+			'leave' => static function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
 				$type_info->leave( $node );
 			},
 		];
@@ -496,17 +542,17 @@ class QueryAnalyzer {
 	 * Given the Schema and a query string, return a list of GraphQL model names that are being
 	 * asked for by the query.
 	 *
-	 * @param ?Schema $schema The WPGraphQL Schema
+	 * @param ?\GraphQL\Type\Schema $schema The WPGraphQL Schema
 	 * @param ?string $query  The query string
 	 *
 	 * @return array
-	 * @throws SyntaxError|Exception
+	 * @throws \GraphQL\Error\SyntaxError|\Exception
 	 */
 	public function set_query_models( ?Schema $schema, ?string $query ): array {
 
 		/**
 		 * @param array|null $null   Default value for the filter
-		 * @param ?Schema    $schema The WPGraphQL Schema for the current request
+		 * @param ?\GraphQL\Type\Schema $schema The WPGraphQL Schema for the current request
 		 * @param ?string    $query  The query string being requested
 		 */
 		$null           = null;
@@ -527,7 +573,7 @@ class QueryAnalyzer {
 		$type_map  = [];
 		$type_info = new TypeInfo( $schema );
 		$visitor   = [
-			'enter' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
+			'enter' => static function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info, &$type_map, $schema ) {
 				$type_info->enter( $node );
 				$type = $type_info->getType();
 				if ( ! $type ) {
@@ -551,7 +597,7 @@ class QueryAnalyzer {
 					$type_map[] = $named_type->config['model'];
 				}
 			},
-			'leave' => function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
+			'leave' => static function ( $node, $key, $parent, $path, $ancestors ) use ( $type_info ) {
 				$type_info->leave( $node );
 			},
 		];
@@ -623,11 +669,11 @@ class QueryAnalyzer {
 			$keys[] = $this->get_operation_name();
 		}
 
-		if ( ! empty( $this->get_list_types() ) && is_array( $this->get_list_types() ) ) {
+		if ( ! empty( $this->get_list_types() ) ) {
 			$keys = array_merge( $keys, $this->get_list_types() );
 		}
 
-		if ( ! empty( $this->get_runtime_nodes() ) && is_array( $this->get_runtime_nodes() ) ) {
+		if ( ! empty( $this->get_runtime_nodes() ) ) {
 			$keys = array_merge( $keys, $this->get_runtime_nodes() );
 		}
 
@@ -724,7 +770,7 @@ class QueryAnalyzer {
 	 * Outputs Query Analyzer data in the extensions response
 	 *
 	 * @param mixed       $response
-	 * @param WPSchema    $schema         The WPGraphQL Schema
+	 * @param \WPGraphQL\WPSchema $schema The WPGraphQL Schema
 	 * @param string|null $operation_name The operation name being executed
 	 * @param string|null $request        The GraphQL Request being made
 	 * @param array|null  $variables      The variables sent with the request
@@ -738,7 +784,7 @@ class QueryAnalyzer {
 		/**
 		 * @param bool        $should         Whether the query analyzer output should be displayed in the Extensions output. Default to the value of WPGraphQL Debug.
 		 * @param mixed       $response       The response of the WPGraphQL Request being executed
-		 * @param WPSchema    $schema         The WPGraphQL Schema
+		 * @param \WPGraphQL\WPSchema $schema The WPGraphQL Schema
 		 * @param string|null $operation_name The operation name being executed
 		 * @param string|null      $request        The GraphQL Request being made
 		 * @param array|null  $variables      The variables sent with the request

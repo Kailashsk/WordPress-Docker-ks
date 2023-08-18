@@ -1,6 +1,4 @@
 import { __ } from '@wordpress/i18n';
-import getIcon from '../../../../utils/get-icon';
-import PanelArea from '../../../../components/panel-area';
 import { TextareaControl, TextControl, SelectControl, BaseControl } from '@wordpress/components';
 import UnitControl from '../../../../components/unit-control';
 import getAttribute from '../../../../utils/get-attribute';
@@ -8,10 +6,10 @@ import getMediaUrl from '../../../../utils/get-media-url';
 import { store as coreStore } from '@wordpress/core-data';
 import { useSelect } from '@wordpress/data';
 import { store as blockEditorStore } from '@wordpress/block-editor';
+import getResponsivePlaceholder from '../../../../utils/get-responsive-placeholder';
 
 export default function ImageSettingsControls( props ) {
 	const {
-		state,
 		attributes,
 		setAttributes,
 		media,
@@ -43,15 +41,7 @@ export default function ImageSettingsControls( props ) {
 	}, [] );
 
 	return (
-		<PanelArea
-			{ ...props }
-			title={ __( 'Settings', 'generateblocks' ) }
-			initialOpen={ false }
-			icon={ getIcon( 'backgrounds' ) }
-			className={ 'gblocks-panel-label' }
-			id={ 'imageSettings' }
-			state={ state }
-		>
+		<>
 			{
 				'Desktop' === deviceType &&
 				(
@@ -78,23 +68,29 @@ export default function ImageSettingsControls( props ) {
 			>
 				<div className="gblocks-image-dimensions__row">
 					<UnitControl
-						{ ...props }
 						label={ __( 'Width', 'generateblocks' ) }
 						id="gblocks-image-width"
-						attributeName="width"
-						device={ deviceType }
+						value={ getAttribute( 'width', { attributes, deviceType } ) }
+						placeholder={ getResponsivePlaceholder( 'width', attributes, deviceType ) }
+						onChange={ ( value ) => {
+							setAttributes( {
+								[ getAttribute( 'width', { attributes, deviceType }, true ) ]: value,
+							} );
+						} }
 						min="1"
-						units={ [ 'px', '%', 'vw', 'rem' ] }
 					/>
 
 					<UnitControl
-						{ ...props }
 						label={ __( 'Height', 'generateblocks' ) }
 						id="gblocks-image-height"
-						attributeName="height"
-						device={ deviceType }
+						value={ getAttribute( 'height', { attributes, deviceType } ) }
+						placeholder={ getResponsivePlaceholder( 'height', attributes, deviceType ) }
+						onChange={ ( value ) => {
+							setAttributes( {
+								[ getAttribute( 'height', { attributes, deviceType }, true ) ]: value,
+							} );
+						} }
 						min="1"
-						units={ [ 'px', '%', 'vw', 'rem' ] }
 					/>
 				</div>
 			</BaseControl>
@@ -158,6 +154,6 @@ export default function ImageSettingsControls( props ) {
 					/>
 				</>
 			}
-		</PanelArea>
+		</>
 	);
 }

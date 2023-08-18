@@ -3,85 +3,89 @@
  */
 import { useEffect, useState, useRef } from '@wordpress/element';
 import { TextControl, BaseControl } from '@wordpress/components';
+import classnames from 'classnames';
 
 /**
  * Internal dependencies
  */
-import hasNumericValue from '../../utils/has-numeric-value';
+
 import './editor.scss';
+import UnitDropdown from './unit-dropdown';
+import unitList from './unit-list';
 
 export default function UnitControl( props ) {
 	const {
 		label,
-		attributeName,
-		attributes,
-		setAttributes,
-		units = [ 'px', 'em', '%', 'rem' ],
-		device,
+		units = [],
+		defaultUnit = '',
+		unitCount = 7,
 		min = 0,
 		max,
 		step,
-		id = attributeName,
+		id,
+		disabled = false,
+		overrideValue = null,
+		overrideAction = () => null,
+		onChange,
+		value,
+		placeholder,
+		help = '',
+		focusOnMount = false,
+		onFocus = () => null,
 	} = props;
 
+	const visibleUnits = units.concat( unitList ).slice( 0, unitCount );
 	const [ unitValue, setUnitValue ] = useState( '' );
 	const [ numericValue, setNumericValue ] = useState( '' );
 	const [ placeholderValue, setPlaceholderValue ] = useState( '' );
 	const isMounted = useRef( false );
+	const wrapperRef = useRef( false );
+	const inputRef = useRef( false );
 
-	const attribute = device && 'Desktop' !== device
-		? attributeName + device
-		: attributeName;
+	const splitValues = ( values ) => {
+		const unitRegex = unitList.join( '|' );
+		const splitRegex = new RegExp( `(${ unitRegex })` );
 
-	const splitValues = ( value ) => {
-		return value
-			? value.split( /(\d+)/ ).filter( ( singleValue ) => '' !== singleValue )
+		return values
+			? values.toString().toLowerCase().split( splitRegex ).filter( ( singleValue ) => '' !== singleValue )
 			: [];
 	};
 
-	const getNumericValue = ( values ) => values.length > 0 ? values[ 0 ] : '';
-	const getUnitValue = ( values ) => values.length > 1 ? values[ 1 ] : 'px';
-	const desktopValues = splitValues( attributes[ attributeName ] );
-	const tabletValues = splitValues( attributes[ attributeName + 'Tablet' ] );
+	const getNumericValue = ( values ) => values.length > 0 ? values[ 0 ].trim() : '';
+	const defaultUnitValue = defaultUnit ? defaultUnit : visibleUnits[ 0 ];
+	const getUnitValue = ( values ) => values.length > 1 ? values[ 1 ] : defaultUnitValue;
+
+	// Test if the value starts with a number, decimal or a single dash.
+	const startsWithNumber = ( number ) => /^([-]?\d|[-]?\.)/.test( number );
 
 	const setPlaceholders = () => {
-		if ( ! attributes[ attribute ] ) {
-			// Set desktop value as placeholder.
-			if ( ! attributes[ attributeName + 'Tablet' ] ) {
-				if (
-					'Tablet' === device ||
-					(
-						'Mobile' === device &&
-						attributes[ attributeName ]
-					)
-				) {
-					setPlaceholderValue( getNumericValue( desktopValues ) );
-					setUnitValue( getUnitValue( desktopValues ) );
-				}
-			}
+		if ( ! value ) {
+			const placeholderValues = overrideValue
+				? splitValues( overrideValue )
+				: splitValues( placeholder );
 
-			// Set tablet value as placeholder.
-			if (
-				'Mobile' === device &&
-				attributes[ attributeName + 'Tablet' ]
-			) {
-				setPlaceholderValue( getNumericValue( tabletValues ) );
-				setUnitValue( getUnitValue( tabletValues ) );
-			}
+			setPlaceholderValue( getNumericValue( placeholderValues ) );
+			setUnitValue( getUnitValue( placeholderValues ) );
 		}
 	};
 
 	// Split the number and unit into two values.
 	useEffect( () => {
-		const values = splitValues( attributes[ attribute ] );
+		const newValue = overrideValue && disabled ? overrideValue : value;
 
-		setNumericValue( getNumericValue( values ) );
-		setUnitValue( getUnitValue( values ) );
+		// Split our values if we're starting with a number.
+		if ( startsWithNumber( newValue ) ) {
+			const values = splitValues( newValue );
 
-		// Set the device placeholders and switch the units to match
-		// their parent device value if no device-specific value exists.
+			setNumericValue( getNumericValue( values ) );
+			setUnitValue( getUnitValue( values ) );
+		} else {
+			setNumericValue( newValue );
+			setUnitValue( '' );
+		}
+
 		setPlaceholders();
-	}, [ device, attributes[ attribute ] ] );
+	}, [ value, overrideValue ] );
 
 	useEffect( () => {
 		// Don't run this on first render.
@@ -90,42 +94,45 @@ export default function UnitControl( props ) {
 			return;
 		}
 
-		const fullValue = hasNumericValue( numericValue )
-			? numericValue + unitValue
-			: '';
+		const hasOverride = !! overrideValue && !! disabled;
 
-		const deviceValues = {
-			Tablet: desktopValues,
-			Mobile: tabletValues,
-		};
+		const fullValue = startsWithNumber( numericValue )
+			? numericValue + unitValue
+			: numericValue;
 
 		// Clear the placeholder if the units don't match.
 		if ( ! fullValue ) {
-			if ( device in deviceValues ) {
-				if ( unitValue !== getUnitValue( deviceValues[ device ] ) ) {
-					setPlaceholderValue( '' );
-				} else {
-					setPlaceholders();
-				}
+			if ( unitValue !== getUnitValue( splitValues( placeholder ) ) ) {
+				setPlaceholderValue( '' );
+			} else {
+				setPlaceholders();
 			}
 		}
 
-		if ( fullValue !== attributes[ attribute ] ) {
-			setAttributes( {
-				[ attribute ]: fullValue,
-			} );
+		if ( ! hasOverride && fullValue !== value ) {
+			onChange( fullValue );
 		}
 	}, [ numericValue, unitValue ] );
+
+	useEffect( () => {
+		if ( focusOnMount && inputRef?.current ) {
+			inputRef.current.focus();
+		}
+	}, [ label ] );
 
 	return (
 		<BaseControl
 			label={ label }
+			help={ help }
 			id={ id }
-			className="gblocks-unit-control"
+			className={ classnames( {
+				'gblocks-unit-control': true,
+				'gblocks-unit-control__disabled': !! disabled,
+			} ) }
 		>
-			<div className="gblocks-unit-control__input">
+			<div className="gblocks-unit-control__input" ref={ wrapperRef }>
 				<TextControl
-					type="number"
+					type="text"
 					value={ numericValue }
 					placeholder={ placeholderValue }
 					id={ id }
@@ -133,26 +140,32 @@ export default function UnitControl( props ) {
 					max={ max }
 					step={ step }
 					autoComplete="off"
-					onChange={ ( value ) => {
-						if ( min >= 0 ) {
-							// No hyphens allowed here.
-							value = value.toString().replace( /-/g, '' );
-						}
-
-						setNumericValue( value );
+					disabled={ disabled }
+					onChange={ ( newValue ) => setNumericValue( newValue ) }
+					onFocus={ () => {
+						onFocus();
 					} }
+					ref={ inputRef }
 				/>
 
-				<span className="gblocks-unit-control__unit-select">
-					<select
-						value={ unitValue }
-						onChange={ ( e ) => {
-							setUnitValue( e.target.value );
-						} }
-					>
-						{ units.map( ( unitOption ) => <option key={ unitOption } value={ unitOption }>{ unitOption }</option> ) }
-					</select>
-				</span>
+				<div className="gblocks-unit-control__input--action">
+					{ !! overrideAction && <div className="gblocks-unit-control__override-action">{ overrideAction() } </div> }
+
+					{ (
+						startsWithNumber( numericValue ) ||
+						(
+							! numericValue &&
+							( ! placeholderValue || startsWithNumber( placeholderValue ) )
+						)
+					) &&
+						<UnitDropdown
+							value={ unitValue }
+							disabled={ disabled || 1 === visibleUnits.length }
+							units={ visibleUnits }
+							onChange={ ( newValue ) => setUnitValue( newValue ) }
+						/>
+					}
+				</div>
 			</div>
 		</BaseControl>
 	);

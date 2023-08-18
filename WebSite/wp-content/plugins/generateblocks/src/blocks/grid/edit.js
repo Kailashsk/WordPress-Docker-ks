@@ -10,9 +10,13 @@ import ComponentCSS from './components/ComponentCSS';
 import classnames from 'classnames';
 import { applyFilters } from '@wordpress/hooks';
 import { compose } from '@wordpress/compose';
-import { useDeviceType, useInnerBlocksCount } from '../../hooks';
-import { withUniqueId, withGridLegacyMigration } from '../../hoc';
+import { useInnerBlocksCount } from '../../hooks';
+import { withUniqueId, withGridLegacyMigration, withDeviceType } from '../../hoc';
 import withQueryLoop from '../query-loop/hoc/withQueryLoop';
+import { withBlockContext } from '../../block-context';
+import GenerateBlocksInspectorControls from '../../extend/inspector-control';
+import './components/WidthControls';
+import getDeviceType from '../../utils/get-device-type';
 
 const GridEdit = ( props ) => {
 	const {
@@ -22,12 +26,11 @@ const GridEdit = ( props ) => {
 		InnerBlocksRenderer = InnerBlocks,
 		LayoutSelector = GridLayoutSelector,
 		defaultLayout = false,
-		templateLock = false,
 		context,
 	} = props;
 
 	const [ selectedLayout, setSelectedLayout ] = useState( false );
-	const [ deviceType, setDeviceType ] = useDeviceType( 'Desktop' );
+	const deviceType = getDeviceType();
 	const innerBlocksCount = useInnerBlocksCount( clientId );
 
 	const { insertBlocks } = useDispatch( 'core/block-editor' );
@@ -43,17 +46,22 @@ const GridEdit = ( props ) => {
 
 		if ( ! attributes.isQueryLoop && layout ) {
 			const columnsData = getColumnsFromLayout( layout, attributes.uniqueId );
+			const newColumns = [];
 
 			columnsData.forEach( ( colAttrs ) => {
+				newColumns.push( createBlock( 'generateblocks/container', colAttrs ) );
+			} );
+
+			setTimeout( () => {
 				insertBlocks(
-					createBlock( 'generateblocks/container', colAttrs ),
+					newColumns,
 					undefined,
 					props.clientId,
 					false
 				);
-			} );
 
-			setSelectedLayout( false );
+				setSelectedLayout( false );
+			}, 50 );
 		}
 	}, [
 		selectedLayout,
@@ -84,16 +92,22 @@ const GridEdit = ( props ) => {
 				<BlockControls uniqueId={ attributes.uniqueId } clientId={ props.clientId } />
 			}
 
-			<InspectorControls
-				{ ...props }
-				state={ { selectedLayout, deviceType } }
-				deviceType={ deviceType }
-				setDeviceType={ setDeviceType }
-				blockDefaults={ generateBlocksDefaults.gridContainer }
-			/>
+			<GenerateBlocksInspectorControls
+				attributes={ attributes }
+				setAttributes={ setAttributes }
+			>
+				{ applyFilters( 'generateblocks.editor.settingsPanel', undefined, { ...props, device: deviceType } ) }
+
+				<InspectorControls
+					attributes={ attributes }
+					setAttributes={ setAttributes }
+					deviceType={ deviceType }
+				/>
+			</GenerateBlocksInspectorControls>
 
 			<InspectorAdvancedControls
 				anchor={ attributes.anchor }
+				blockLabel={ attributes.blockLabel }
 				setAttributes={ setAttributes }
 			/>
 
@@ -103,7 +117,7 @@ const GridEdit = ( props ) => {
 				{ ( attributes.isQueryLoop || attributes.columns > 0 || selectedLayout )
 					? (
 						<InnerBlocksRenderer
-							templateLock={ templateLock }
+							templateLock={ attributes.templateLock }
 							allowedBlocks={ [ 'generateblocks/container' ] }
 							renderAppender={ false }
 							clientId={ clientId }
@@ -126,6 +140,8 @@ const GridEdit = ( props ) => {
 };
 
 export default compose(
+	withDeviceType,
+	withBlockContext,
 	withQueryLoop,
 	withUniqueId,
 	withGridLegacyMigration,

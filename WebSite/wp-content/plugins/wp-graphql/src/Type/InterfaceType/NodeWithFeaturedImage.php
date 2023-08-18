@@ -13,10 +13,10 @@ class NodeWithFeaturedImage {
 	/**
 	 * Registers the NodeWithFeaturedImage Type to the Schema
 	 *
-	 * @param TypeRegistry $type_registry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry
 	 *
 	 * @return void
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function register_type( TypeRegistry $type_registry ) {
 
@@ -29,7 +29,7 @@ class NodeWithFeaturedImage {
 					'featuredImage' => [
 						'toType'   => 'MediaItem',
 						'oneToOne' => true,
-						'resolve'  => function ( Post $post, $args, AppContext $context, ResolveInfo $info ) {
+						'resolve'  => static function ( Post $post, $args, AppContext $context, ResolveInfo $info ) {
 
 							if ( empty( $post->featuredImageDatabaseId ) ) {
 								return null;

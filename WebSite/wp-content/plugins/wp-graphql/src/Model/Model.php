@@ -51,7 +51,7 @@ abstract class Model {
 	/**
 	 * Stores the WP_User object for the current user in the session
 	 *
-	 * @var WP_User $current_user
+	 * @var \WP_User $current_user
 	 */
 	protected $current_user;
 
@@ -80,11 +80,12 @@ abstract class Model {
 	 *                                            data to compare with the current user ID
 	 *
 	 * @return void
-	 * @throws Exception Throws Exception.
+	 * @throws \Exception Throws Exception.
 	 */
 	protected function __construct( $restricted_cap = '', $allowed_restricted_fields = [], $owner = null ) {
 
 		if ( empty( $this->data ) ) {
+			// translators: %s is the name of the model.
 			throw new Exception( sprintf( __( 'An empty data set was used to initialize the modeling of this %s object', 'wp-graphql' ), $this->get_model_name() ) );
 		}
 
@@ -216,7 +217,7 @@ abstract class Model {
 			 * @param mixed       $data           The un-modeled incoming data
 			 * @param string|null $visibility     The visibility that has currently been set for the data at this point
 			 * @param null|int    $owner          The user ID for the owner of this piece of data
-			 * @param WP_User     $current_user   The current user for the session
+			 * @param \WP_User $current_user The current user for the session
 			 *
 			 * @return string
 			 */
@@ -231,7 +232,7 @@ abstract class Model {
 			 * @param mixed       $data         The un-modeled incoming data
 			 * @param string|null $visibility   The visibility that has currently been set for the data at this point
 			 * @param null|int    $owner        The user ID for the owner of this piece of data
-			 * @param WP_User     $current_user The current user for the session
+			 * @param \WP_User $current_user The current user for the session
 			 *
 			 * @return bool|null
 			 */
@@ -253,7 +254,7 @@ abstract class Model {
 			 * @param mixed       $data         The un-modeled incoming data
 			 * @param string|null $visibility   The visibility that has currently been set for the data at this point
 			 * @param null|int    $owner        The user ID for the owner of this piece of data
-			 * @param WP_User     $current_user The current user for the session
+			 * @param \WP_User $current_user The current user for the session
 			 *
 			 * @return bool
 			 */
@@ -277,7 +278,7 @@ abstract class Model {
 		 * @param string      $model_name   Name of the model the filter is currently being executed in
 		 * @param mixed       $data         The un-modeled incoming data
 		 * @param null|int    $owner        The user ID for the owner of this piece of data
-		 * @param WP_User     $current_user The current user for the session
+		 * @param \WP_User $current_user The current user for the session
 		 *
 		 * @return string
 		 */
@@ -325,7 +326,7 @@ abstract class Model {
 			 * @param mixed       $data                      The un-modeled incoming data
 			 * @param string|null $visibility                The visibility that has currently been set for the data at this point
 			 * @param null|int    $owner                     The user ID for the owner of this piece of data
-			 * @param WP_User     $current_user              The current user for the session
+			 * @param \WP_User $current_user The current user for the session
 			 *
 			 * @return array
 			 */
@@ -362,7 +363,7 @@ abstract class Model {
 					 * @param mixed    $data         The un-modeled incoming data
 					 * @param string   $visibility   The visibility setting for this piece of data
 					 * @param null|int $owner        The user ID for the owner of this piece of data
-					 * @param WP_User  $current_user The current user for the session
+					 * @param \WP_User $current_user The current user for the session
 					 *
 					 * @return string
 					 */
@@ -387,7 +388,7 @@ abstract class Model {
 				 * @param mixed    $data         The un-modeled incoming data
 				 * @param string   $visibility   The visibility setting for this piece of data
 				 * @param null|int $owner        The user ID for the owner of this piece of data
-				 * @param WP_User  $current_user The current user for the session
+				 * @param \WP_User $current_user The current user for the session
 				 *
 				 * @return null|callable|int|string|array|mixed
 				 */
@@ -413,7 +414,7 @@ abstract class Model {
 					 * @param mixed    $data         The un-modeled incoming data
 					 * @param string   $visibility   The visibility setting for this piece of data
 					 * @param null|int $owner        The user ID for the owner of this piece of data
-					 * @param WP_User  $current_user The current user for the session
+					 * @param \WP_User $current_user The current user for the session
 					 *
 					 * @return mixed
 					 */
@@ -429,7 +430,7 @@ abstract class Model {
 				 * @param mixed    $data         The un-modeled incoming data
 				 * @param string   $visibility   The visibility setting for this piece of data
 				 * @param null|int $owner        The user ID for the owner of this piece of data
-				 * @param WP_User  $current_user The current user for the session
+				 * @param \WP_User $current_user The current user for the session
 				 */
 				do_action( 'graphql_after_return_field_from_model', $result, $key, $this->get_model_name(), $this->data, $this->visibility, $this->owner, $this->current_user );
 
@@ -481,7 +482,7 @@ abstract class Model {
 		 * @param string   $model_name   Name of the model the filter is currently being executed in
 		 * @param string   $visibility   The visibility setting for this piece of data
 		 * @param null|int $owner        The user ID for the owner of this piece of data
-		 * @param WP_User  $current_user The current user for the session
+		 * @param \WP_User $current_user The current user for the session
 		 *
 		 * @return array
 		 *
@@ -497,7 +498,7 @@ abstract class Model {
 		 * @param mixed    $data         The un-modeled incoming data
 		 * @param string   $visibility   The visibility setting for this piece of data
 		 * @param null|int $owner        The user ID for the owner of this piece of data
-		 * @param WP_User  $current_user The current user for the session
+		 * @param \WP_User $current_user The current user for the session
 		 *
 		 * @return array
 		 */

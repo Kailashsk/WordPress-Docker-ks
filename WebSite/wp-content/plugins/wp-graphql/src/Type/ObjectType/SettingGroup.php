@@ -14,10 +14,10 @@ class SettingGroup {
 	 *
 	 * @param string       $group_name    The name of the setting group
 	 * @param string       $group         The settings group config
-	 * @param TypeRegistry $type_registry The WPGraphQL TypeRegistry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry The WPGraphQL TypeRegistry
 	 *
 	 * @return string|null
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function register_settings_group( string $group_name, string $group, TypeRegistry $type_registry ) {
 
@@ -33,6 +33,7 @@ class SettingGroup {
 		register_graphql_object_type(
 			ucfirst( $group_name ) . 'Settings',
 			[
+				// translators: %s is the name of the setting group.
 				'description' => sprintf( __( 'The %s setting type', 'wp-graphql' ), $group_name ),
 				'fields'      => $fields,
 			]
@@ -47,7 +48,7 @@ class SettingGroup {
 	 *
 	 * @param string $group_name Name of the settings group to retrieve fields for
 	 * @param string $group      The settings group config
-	 * @param TypeRegistry $type_registry The WPGraphQL TypeRegistry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry The WPGraphQL TypeRegistry
 	 *
 	 * @return array
 	 */
@@ -88,8 +89,9 @@ class SettingGroup {
 					 */
 					$fields[ $field_key ] = [
 						'type'        => $type_registry->get_type( $setting_field['type'] ),
+						// translators: %s is the name of the setting group.
 						'description' => isset( $setting_field['description'] ) && ! empty( $setting_field['description'] ) ? $setting_field['description'] : sprintf( __( 'The %s Settings Group', 'wp-graphql' ), $setting_field['type'] ),
-						'resolve'     => function ( $root, array $args, $context, $info ) use ( $setting_field ) {
+						'resolve'     => static function ( $root, array $args, $context, $info ) use ( $setting_field ) {
 
 							/**
 							 * Check to see if the user querying the email field has the 'manage_options' capability

@@ -1,9 +1,8 @@
 import { __ } from '@wordpress/i18n';
-import { addFilter } from '@wordpress/hooks';
+import { addFilter, applyFilters } from '@wordpress/hooks';
 
-function AddColorItems( items, props ) {
+function shouldShowCurrentColors( props ) {
 	const {
-		name,
 		attributes,
 	} = props;
 
@@ -12,11 +11,23 @@ function AddColorItems( items, props ) {
 		dynamicContentType,
 	} = attributes;
 
+	return applyFilters(
+		'generateblocks.editor.addButtonCurrentColors',
+		useDynamicData && 'pagination-numbers' === dynamicContentType,
+		props
+	);
+}
+
+function AddColorItems( items, props ) {
+	const {
+		name,
+	} = props;
+
 	if ( 'generateblocks/button' !== name ) {
 		return items;
 	}
 
-	const addCurrentColors = useDynamicData && 'pagination-numbers' === dynamicContentType;
+	const addCurrentColors = shouldShowCurrentColors( props );
 
 	if ( addCurrentColors ) {
 		const newItems = [
@@ -31,12 +42,6 @@ function AddColorItems( items, props ) {
 				attribute: 'textColorCurrent',
 				tooltip: __( 'Current', 'generateblocks' ),
 				alpha: false,
-			},
-			{
-				group: 'border',
-				attribute: 'borderColorCurrent',
-				tooltip: __( 'Current', 'generateblocks' ),
-				alpha: true,
 			},
 		];
 
@@ -65,4 +70,36 @@ addFilter(
 	'generateblocks.editor.colorGroupItems',
 	'generateblocks/button-colors/add-conditional-color-items',
 	AddColorItems
+);
+
+function addBorderCurrent( context, props ) {
+	const {
+		name,
+	} = props;
+
+	if ( 'generateblocks/button' !== name ) {
+		return context;
+	}
+
+	const addCurrentColors = shouldShowCurrentColors( props );
+
+	if ( addCurrentColors ) {
+		const existingColors = context.supports.borders.borderColors;
+
+		if ( ! existingColors.some( ( e ) => 'Current' === e.state ) ) {
+			context.supports.borders.borderColors.push( {
+				state: 'Current',
+				tooltip: __( 'Border Current', 'generateblocks' ),
+				alpha: true,
+			} );
+		}
+	}
+
+	return context;
+}
+
+addFilter(
+	'generateblocks.editor.blockContext',
+	'generateblocks/button-context/add-current-border-color',
+	addBorderCurrent
 );

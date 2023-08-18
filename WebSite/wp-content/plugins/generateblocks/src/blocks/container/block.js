@@ -13,10 +13,13 @@ import { __ } from '@wordpress/i18n';
 import { registerBlockType } from '@wordpress/blocks';
 import { InnerBlocks } from '@wordpress/block-editor';
 import dynamicContentAttributes from '../../extend/dynamic-content/attributes';
+import { getBlockAttributes } from '../../block-context';
+import containerContext from '../../block-context/container';
+import transforms from './transforms';
 
 const attributes = Object.assign(
 	{},
-	blockAttributes,
+	getBlockAttributes( blockAttributes, containerContext, generateBlocksDefaults.container ),
 	dynamicContentAttributes
 );
 
@@ -53,9 +56,16 @@ registerBlockType( 'generateblocks/container', {
 		);
 	},
 	deprecated,
-	__experimentalLabel: ( attrs ) => {
-		return attrs.isQueryLoopItem
-			? __( 'Post Template', 'generateblocks' )
-			: __( 'Container', 'generateblocks' );
+	__experimentalLabel: ( attrs, { context } ) => {
+		if ( attrs.isQueryLoopItem ) {
+			return __( 'Post Template', 'generateblocks' );
+		}
+
+		if ( 'list-view' === context && attrs.blockLabel ) {
+			return attrs.blockLabel;
+		}
+
+		return __( 'Container', 'generateblocks' );
 	},
+	transforms,
 } );

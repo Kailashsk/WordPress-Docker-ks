@@ -18,7 +18,7 @@ class UpdateSettings {
 	/**
 	 * Registers the CommentCreate mutation.
 	 *
-	 * @param TypeRegistry $type_registry The WPGraphQL TypeRegistry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry The WPGraphQL TypeRegistry
 	 *
 	 * @return void
 	 */
@@ -35,7 +35,7 @@ class UpdateSettings {
 			[
 				'inputFields'         => $input_fields,
 				'outputFields'        => $output_fields,
-				'mutateAndGetPayload' => function ( $input ) use ( $type_registry ) {
+				'mutateAndGetPayload' => static function ( $input ) use ( $type_registry ) {
 					return self::mutate_and_get_payload( $input, $type_registry );
 				},
 			]
@@ -45,7 +45,7 @@ class UpdateSettings {
 	/**
 	 * Defines the mutation input field configuration.
 	 *
-	 * @param TypeRegistry $type_registry The WPGraphQL TypeRegistry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry The WPGraphQL TypeRegistry
 	 *
 	 * @return array
 	 */
@@ -105,7 +105,7 @@ class UpdateSettings {
 	/**
 	 * Defines the mutation output field configuration.
 	 *
-	 * @param TypeRegistry $type_registry The WPGraphQL TypeRegistry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry The WPGraphQL TypeRegistry
 	 *
 	 * @return array
 	 */
@@ -124,7 +124,7 @@ class UpdateSettings {
 		$output_fields['allSettings'] = [
 			'type'        => 'Settings',
 			'description' => __( 'Update all settings.', 'wp-graphql' ),
-			'resolve'     => function () {
+			'resolve'     => static function () {
 				return true;
 			},
 		];
@@ -137,8 +137,9 @@ class UpdateSettings {
 
 				$output_fields[ Utils::format_field_name( $setting_type_name ) ] = [
 					'type'        => $setting_type_name,
+					// translators: %s is the setting type name
 					'description' => sprintf( __( 'Update the %s setting.', 'wp-graphql' ), $setting_type_name ),
-					'resolve'     => function () use ( $setting_type_name ) {
+					'resolve'     => static function () use ( $setting_type_name ) {
 						return $setting_type_name;
 					},
 				];
@@ -152,11 +153,11 @@ class UpdateSettings {
 	 * Defines the mutation data modification closure.
 	 *
 	 * @param array $input The mutation input
-	 * @param TypeRegistry $type_registry The WPGraphQL TypeRegistry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry The WPGraphQL TypeRegistry
 	 *
 	 * @return array
 	 *
-	 * @throws UserError
+	 * @throws \GraphQL\Error\UserError
 	 */
 	public static function mutate_and_get_payload( array $input, TypeRegistry $type_registry ): array {
 		/**

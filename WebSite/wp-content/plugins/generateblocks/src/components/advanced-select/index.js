@@ -58,6 +58,7 @@ export default ( props ) => {
 		maxMenuHeight: 250,
 		theme: customTheme,
 		menuPortalTarget: document.querySelector( 'body' ),
+		menuPlacement: 'auto',
 	};
 
 	const wrapperStyles = Object.assign( {}, {
@@ -69,7 +70,7 @@ export default ( props ) => {
 	const finalProps = Object.assign( {}, defaultProps, props );
 
 	return (
-		<div style={ wrapperStyles }>
+		<div className="gblocks-advanced-select" style={ wrapperStyles }>
 			<BaseControl
 				id={ finalProps.id }
 				label={ finalProps.label }

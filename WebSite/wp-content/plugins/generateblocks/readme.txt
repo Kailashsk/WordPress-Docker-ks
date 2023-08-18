@@ -3,17 +3,15 @@ Contributors: edge22
 Donate link: https://generateblocks.com
 Tags: blocks, gutenberg, container, headline, grid, columns, page builder, wysiwyg, block editor, query, loop, posts
 Requires at least: 5.9
-Tested up to: 6.0
-Requires PHP: 5.6
-Stable tag: 1.6.0
+Tested up to: 6.3
+Requires PHP: 7.2
+Stable tag: 1.8.2
 License: GPLv2 or later
 License URI: http://www.gnu.org/licenses/gpl-2.0.html
 
 A small collection of lightweight WordPress blocks that can accomplish nearly anything.
 
 == Description ==
-
-https://vimeo.com/412896611
 
 Add incredible versatility to your editor without bloating it with tons of one-dimensional Gutenberg blocks. With GenerateBlocks, you can learn a handful of blocks deeply and use them to build anything.
 
@@ -33,7 +31,7 @@ Create advanced layouts with flexible grids. The Grid block gives you the abilit
 
 Craft text-rich content with advanced typography. Everything from headings to paragraphs - take full control of your text.
 
-= Buttons =
+= Button =
 
 Drive conversions with beautiful buttons.
 
@@ -84,6 +82,144 @@ In most cases, #1 will work fine and is way easier.
 GenerateBlocks was built to work hand-in-hand with [GeneratePress](https://generatepress.com). However, it will work with any theme you choose.
 
 == Changelog ==
+
+= 1.8.2 =
+* Fix: Border colors not showing when old attributes are set.
+* Tweak: Add support for the newly created core function "wp_img_tag_add_loading_optimization_attrs"
+
+= 1.8.1 =
+* Fix: Icon padding controls order
+* Fix: Global styles overwriting local attributes
+* Fix: Editor controls spacing using RTL languages
+
+= 1.8.0 =
+* Feature: Add flexbox alignment matrix component to Container toolbar
+* Feature: Add new Borders panel with width/style/color options for all four sides
+* Feature: Add new dimensions components in Spacing panel
+* Feature: Mix and match padding/margin units across sides and devices
+* Feature: Add more available units to all options that accept them
+* Feature: Allow text values (calc(), var(), etc...) in options that accept them
+* Feature: New "Add to Container" icon added to the toolbar of all blocks
+* Feature: Allow removal of Container block around innerBlocks
+* Feature: Display text field to allow user to replace image URL
+* Feature: Headline block show text in List View
+* Feature: Button block show text in List View
+* Feature: Image block show alt/title in List View
+* Feature: Add Block Label option to label Container, Query Loop, and Grid blocks in List View
+* Feature: Only show one dimension field if synced
+* Feature: Add option to disable Google fonts
+* Feature: Allow all unit types in UnitControl
+* Feature: Add help icon to unit list
+* Fix: Attributes merging incorrect values when multiple blocks are selected
+* Fix: Color and Background panels are visible/accessible on responsive views
+* Fix: Template lock system not applying to inner blocks
+* Fix: Button with dynamic content not displaying the aria-label
+* Fix: unique id not regenareted correctly on widgets editor
+* Fix: React createRoot warning
+* Fix: Double-click when selecting Grid template
+* Fix: Query loop parameter delete button size
+* Fix: Advanced select jumping when near the bottom of the page
+* Fix: Triple captions using static image with dynamic link
+* Fix: Flex icons based on direction in device previews
+* Fix: Container appender icon spacing
+* Fix: useDeviceType state was one state behind when triggered from core buttons
+* Fix: Use unit in UnitControl if value starts with decimal
+* Fix: Remove trailing spaces from UnitControl numeric value
+* Tweak: Require at least PHP 7.2
+* Tweak: Move block alignment to Layout panel
+* Tweak: Remove help text from Grid vertical alignment
+* Tweak: Remove the Button Container variation
+* Tweak: Clean up UnitControl display across all browsers
+* Tweak: Show all Google fonts in font family dropdown
+* Tweak: Remove top/bottom margin from Query Loop in the editor
+* Tweak: Force lowercase units in UnitControl
+* Tweak: Improve UnitControl unit visibility
+* Tweak: Show units in 2 rows
+* Tweak: Use same unit list for all UnitControl controls
+* Dev: Rebuild how block migrations run
+* Dev: Migrate spacing attributes to new spacing object attribute
+* Dev: Migrate typography attributes to new typography object attribute
+* Dev: Migrate icon padding and size attributes to new iconStyles object attribute
+
+= 1.7.3 =
+* Fix: REST API warnings
+* Fix: Old block deprecations
+
+= 1.7.2 =
+* Fix: Non-registered onboarding keys were breaking root container
+* Fix: Block styling in block theme templates
+
+= 1.7.1 =
+* Tweak: Add link to documentation under legacy layout toggle
+* Fix: Container width migration for old blockVersion: 1 blocks
+* Fix: Container padding migration for old blockVersion: 1 blocks
+* Fix: Missing block styling with some third-party plugins
+
+= 1.7.0 =
+* Feature: Add flexbox controls to all blocks
+* Feature: Add sizing controls to all blocks
+* Feature: Add global max-width option to sizing
+* Feature: Add position option to all blocks
+* Feature: Add overflow options to Container block
+* Feature: Add flex child controls to Headline and Button blocks
+* Feature: Add Button Container variant using Container block
+* Feature: Deprecate existing Button Container block
+* Feature: Remove inner container div from newly added Container blocks
+* Feature: Add manual migration for existing Container blocks with inner container
+* Feature: Add insert inner Container button
+* Feature: Allow adding singular Button blocks
+* Feature: Allow grouping of singular Buttons inside a Container
+* Feature: Add z-index options to tablet and mobile
+* Feature: Add order option to desktop
+* Feature: Add text alignment to Button block
+* Feature: Add generateblocks_dynamic_source_id filter
+* Feature: Add generateblocks.editor.addButtonCurrentColors filter
+* Feature: Add generateblocks_block_css_selector filter
+* Feature: Add button type option
+* Feature: Accept ID-only searches in dynamic content post selects
+* Feature: Add template selector system
+* Feature: Add generateblocks.editor.renderBlock hook
+* Feature: Add onboard system
+* Feature: Add generateblocks.editor.settingsPanel filter
+* Feature: Use row-gap for Grid vertical gap option
+* Feature: Add generateblocks_block_one_time_css_data hook
+* Feature: Add generateblocks_before_container_open hook
+* Feature: Add generateblocks_after_container_close hook
+* Feature: Allow "auto" as value in margin controls
+* Feature: Add generateblocks_use_visited_selector filter
+* Feature: Add generateblocks_query_loop_editor_posts_cap filter
+* Tweak: Improve typography font family select
+* Tweak: Improve Container block appender
+* Tweak: Migrate flexBasis to use one value with unit
+* Tweak: Move z-index to Layout panel
+* Tweak: Add Flex Child panel to Layout panel
+* Tweak: Improve Typography section layout
+* Tweak: Move Container alignment to typography section
+* Tweak: Change panel icon color
+* Tweak: Update block icons
+* Tweak: Move device buttons above block name
+* Tweak: Remove transition from Button block
+* Tweak: Remove block description from inspector controls
+* Tweak: Improve advanced select results
+* Tweak: Use new editor_script/style_handles
+* Tweak: Re-order panels
+* Tweak: Move Headline tag name control to Advanced
+* Tweak: Ignore button hover colors on current buttons
+* Tweak: Remove :visited pseudo selector from CSS
+* Tweak: Remove tag name from CSS selectors
+* Tweak: Load CSS later to prevent specificity issues
+* Tweak: Allow "0" as HTML attribute value
+* Tweak: Replace gb-button__current class with gb-block-is-current
+* Tweak: Add pointer-events: none to pseudo backgrounds
+* Fix: Responsive placeholder not showing 0 value
+* Fix: Excerpt spelling mistake
+* Fix: Image placeholder position
+* Fix: Missing source ID in excerpt
+* Fix: Pagination buttons missing generateblocks_query_loop_args filter
+* Fix: Dynamic Button tag name with no link
+* Fix: Prevent faded background image in editor
+* Fix: Pass $block to generateblocks_parse_attr function
+* Fix: WP Filesystem error missing credentials
 
 = 1.6.0 =
 * Feature: Add support for FSE styling

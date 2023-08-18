@@ -19,10 +19,12 @@ import {
 	registerBlockType,
 } from '@wordpress/blocks';
 import getContentTypeLabel from '../../extend/dynamic-content/utils/getContentTypeLabel';
+import { getBlockAttributes } from '../../block-context';
+import buttonContext from '../../block-context/button';
 
 const attributes = Object.assign(
 	{},
-	blockAttributes,
+	getBlockAttributes( blockAttributes, buttonContext, generateBlocksDefaults.button ),
 	dynamicContentAttributes
 );
 
@@ -38,7 +40,6 @@ registerBlockType( 'generateblocks/button', {
 	apiVersion: 2,
 	title: __( 'Button', 'generateblocks' ),
 	description: __( 'Drive conversions with beautiful buttons.', 'generateblocks' ),
-	parent: [ 'generateblocks/button-container' ],
 	icon: getIcon( 'button' ),
 	category: 'generateblocks',
 	keywords: [
@@ -49,14 +50,24 @@ registerBlockType( 'generateblocks/button', {
 	attributes,
 	supports: {
 		className: false,
-		inserter: false,
-		reusable: false,
 	},
 	edit: editButton,
 	save: saveButton,
 	deprecated,
 	usesContext: [ 'postId', 'postType', 'generateblocks/query', 'generateblocks/inheritQuery' ],
-	__experimentalLabel: ( attrs ) => (
-		getContentTypeLabel( attrs, __( 'Button', 'generateblocks' ) )
-	),
+	__experimentalLabel: ( attrs, { context } ) => {
+		if (
+			context === 'list-view' &&
+			( attrs.text || attrs.removeText ) &&
+			! attrs.useDynamicData
+		) {
+			if ( attrs.removeText ) {
+				return __( 'Icon', 'generateblocks' );
+			}
+
+			return attrs.text;
+		}
+
+		return getContentTypeLabel( attrs, __( 'Button', 'generateblocks' ) );
+	},
 } );

@@ -40,58 +40,7 @@ class GenerateBlocks_Block_Image {
 			'height' => '',
 			'heightTablet' => '',
 			'heightMobile' => '',
-			'marginTop' => '',
-			'marginRight' => '',
-			'marginBottom' => '',
-			'marginLeft' => '',
-			'marginTopTablet' => '',
-			'marginRightTablet' => '',
-			'marginBottomTablet' => '',
-			'marginLeftTablet' => '',
-			'marginTopMobile' => '',
-			'marginRightMobile' => '',
-			'marginBottomMobile' => '',
-			'marginLeftMobile' => '',
-			'marginUnit' => 'px',
-			'paddingTop' => '',
-			'paddingRight' => '',
-			'paddingBottom' => '',
-			'paddingLeft' => '',
-			'paddingTopTablet' => '',
-			'paddingRightTablet' => '',
-			'paddingBottomTablet' => '',
-			'paddingLeftTablet' => '',
-			'paddingTopMobile' => '',
-			'paddingRightMobile' => '',
-			'paddingBottomMobile' => '',
-			'paddingLeftMobile' => '',
-			'paddingUnit' => 'px',
 			'borderColor' => '',
-			'borderSizeTop' => '',
-			'borderSizeRight' => '',
-			'borderSizeBottom' => '',
-			'borderSizeLeft' => '',
-			'borderSizeTopTablet' => '',
-			'borderSizeRightTablet' => '',
-			'borderSizeBottomTablet' => '',
-			'borderSizeLeftTablet' => '',
-			'borderSizeTopMobile' => '',
-			'borderSizeRightMobile' => '',
-			'borderSizeBottomMobile' => '',
-			'borderSizeLeftMobile' => '',
-			'borderRadiusTopRight' => '',
-			'borderRadiusBottomRight' => '',
-			'borderRadiusBottomLeft' => '',
-			'borderRadiusTopLeft' => '',
-			'borderRadiusTopRightTablet' => '',
-			'borderRadiusBottomRightTablet' => '',
-			'borderRadiusBottomLeftTablet' => '',
-			'borderRadiusTopLeftTablet' => '',
-			'borderRadiusTopRightMobile' => '',
-			'borderRadiusBottomRightMobile' => '',
-			'borderRadiusBottomLeftMobile' => '',
-			'borderRadiusTopLeftMobile' => '',
-			'borderRadiusUnit' => 'px',
 			'objectFit' => '',
 			'objectFitTablet' => '',
 			'objectFitMobile' => '',
@@ -147,12 +96,21 @@ class GenerateBlocks_Block_Image {
 			$css->set_selector( '.gb-block-image img' );
 			$css->add_property( 'vertical-align', 'middle' );
 
+			do_action(
+				'generateblocks_block_one_time_css_data',
+				'image',
+				$settings,
+				$css
+			);
+
 			self::$singular_css_added = true;
 		}
 
+		// Map deprecated settings.
+		$settings = GenerateBlocks_Map_Deprecated_Attributes::map_attributes( $settings );
+
 		$css->set_selector( '.gb-block-image-' . $id );
-		$css->add_property( 'padding', array( $settings['paddingTop'], $settings['paddingRight'], $settings['paddingBottom'], $settings['paddingLeft'] ), $settings['paddingUnit'] );
-		$css->add_property( 'margin', array( $settings['marginTop'], $settings['marginRight'], $settings['marginBottom'], $settings['marginLeft'] ), $settings['marginUnit'] );
+		generateblocks_add_spacing_css( $css, $settings );
 
 		// Set a flag we'll update later if we disable floats.
 		$disable_float = false;
@@ -166,16 +124,13 @@ class GenerateBlocks_Block_Image {
 		}
 
 		$css->set_selector( '.gb-image-' . $id );
-		$css->add_property( 'border-radius', array( $settings['borderRadiusTopLeft'], $settings['borderRadiusTopRight'], $settings['borderRadiusBottomRight'], $settings['borderRadiusBottomLeft'] ), $settings['borderRadiusUnit'] );
-		$css->add_property( 'border-width', array( $settings['borderSizeTop'], $settings['borderSizeRight'], $settings['borderSizeBottom'], $settings['borderSizeLeft'] ), 'px' );
-		$css->add_property( 'border-color', $settings['borderColor'] );
+		generateblocks_add_border_css( $css, $settings );
 		$css->add_property( 'width', $settings['width'] );
 		$css->add_property( 'height', $settings['height'] );
 		$css->add_property( 'object-fit', $settings['objectFit'] );
 
 		$tablet_css->set_selector( '.gb-block-image-' . $id );
-		$tablet_css->add_property( 'padding', array( $settings['paddingTopTablet'], $settings['paddingRightTablet'], $settings['paddingBottomTablet'], $settings['paddingLeftTablet'] ), $settings['paddingUnit'] );
-		$tablet_css->add_property( 'margin', array( $settings['marginTopTablet'], $settings['marginRightTablet'], $settings['marginBottomTablet'], $settings['marginLeftTablet'] ), $settings['marginUnit'] );
+		generateblocks_add_spacing_css( $tablet_css, $settings, 'Tablet' );
 
 		if ( $has_tablet_float ) {
 			$tablet_css->add_property( 'float', generateblocks_get_float_alignment( $settings['alignmentTablet'] ) );
@@ -189,15 +144,13 @@ class GenerateBlocks_Block_Image {
 		}
 
 		$tablet_css->set_selector( '.gb-image-' . $id );
-		$tablet_css->add_property( 'border-radius', array( $settings['borderRadiusTopLeftTablet'], $settings['borderRadiusTopRightTablet'], $settings['borderRadiusBottomRightTablet'], $settings['borderRadiusBottomLeftTablet'] ), $settings['borderRadiusUnit'] );
-		$tablet_css->add_property( 'border-width', array( $settings['borderSizeTopTablet'], $settings['borderSizeRightTablet'], $settings['borderSizeBottomTablet'], $settings['borderSizeLeftTablet'] ), 'px' );
+		generateblocks_add_border_css( $tablet_css, $settings, 'Tablet' );
 		$tablet_css->add_property( 'width', $settings['widthTablet'] );
 		$tablet_css->add_property( 'height', $settings['heightTablet'] );
 		$tablet_css->add_property( 'object-fit', $settings['objectFitTablet'] );
 
 		$mobile_css->set_selector( '.gb-block-image-' . $id );
-		$mobile_css->add_property( 'padding', array( $settings['paddingTopMobile'], $settings['paddingRightMobile'], $settings['paddingBottomMobile'], $settings['paddingLeftMobile'] ), $settings['paddingUnit'] );
-		$mobile_css->add_property( 'margin', array( $settings['marginTopMobile'], $settings['marginRightMobile'], $settings['marginBottomMobile'], $settings['marginLeftMobile'] ), $settings['marginUnit'] );
+		generateblocks_add_spacing_css( $mobile_css, $settings, 'Mobile' );
 
 		if ( 'floatLeft' === $settings['alignmentMobile'] || 'floatRight' === $settings['alignmentMobile'] ) {
 			$mobile_css->add_property( 'float', generateblocks_get_float_alignment( $settings['alignmentMobile'] ) );
@@ -217,8 +170,7 @@ class GenerateBlocks_Block_Image {
 		}
 
 		$mobile_css->set_selector( '.gb-image-' . $id );
-		$mobile_css->add_property( 'border-radius', array( $settings['borderRadiusTopLeftMobile'], $settings['borderRadiusTopRightMobile'], $settings['borderRadiusBottomRightMobile'], $settings['borderRadiusBottomLeftMobile'] ), $settings['borderRadiusUnit'] );
-		$mobile_css->add_property( 'border-width', array( $settings['borderSizeTopMobile'], $settings['borderSizeRightMobile'], $settings['borderSizeBottomMobile'], $settings['borderSizeLeftMobile'] ), 'px' );
+		generateblocks_add_border_css( $mobile_css, $settings, 'Mobile' );
 		$mobile_css->add_property( 'width', $settings['widthMobile'] );
 		$mobile_css->add_property( 'height', $settings['heightMobile'] );
 		$mobile_css->add_property( 'object-fit', $settings['objectFitMobile'] );
@@ -343,25 +295,19 @@ class GenerateBlocks_Block_Image {
 				$relAttributes[] = 'sponsored';
 			}
 
-			$dynamic_link_data = array(
-				'href' => $dynamic_link,
-				'rel' => ! empty( $relAttributes ) ? implode( ' ', $relAttributes ) : null,
-				'target' => ! empty( $settings['openInNewWindow'] ) ? '_blank' : null,
-			);
-
-			$dynamic_link_attributes = '';
-
-			foreach ( $dynamic_link_data as $attribute => $value ) {
-				$dynamic_link_attributes .= sprintf(
-					' %s="%s"',
-					$attribute,
-					$value
-				);
-			}
-
 			$image = sprintf(
 				'<a %s>%s</a>',
-				trim( $dynamic_link_attributes ),
+				generateblocks_attr(
+					'image-link',
+					array(
+						'class' => '',
+						'href' => $dynamic_link,
+						'rel' => ! empty( $relAttributes ) ? implode( ' ', $relAttributes ) : null,
+						'target' => ! empty( $settings['openInNewWindow'] ) ? '_blank' : null,
+					),
+					$settings,
+					$block
+				),
 				$image
 			);
 		}

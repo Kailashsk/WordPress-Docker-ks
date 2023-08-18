@@ -1,16 +1,26 @@
 import { ToolbarButton, ToolbarGroup, Dropdown, ToggleControl } from '@wordpress/components';
 import { __ } from '@wordpress/i18n';
 import { cloneBlock } from '@wordpress/blocks';
-import { BlockControls, URLInput } from '@wordpress/block-editor';
+import { BlockControls, URLInput, AlignmentToolbar } from '@wordpress/block-editor';
 import { useDispatch, useSelect } from '@wordpress/data';
-import { link, plus } from '@wordpress/icons';
+import { link } from '@wordpress/icons';
 import { applyFilters } from '@wordpress/hooks';
+import isFlexItem from '../../../utils/is-flex-item';
+import getAttribute from '../../../utils/get-attribute';
+import typographyOptions from '../../../extend/inspector-control/controls/typography/options';
+import getDeviceType from '../../../utils/get-device-type';
+import getIcon from '../../../utils/get-icon';
 
-export default ( { clientId, attributes, setAttributes } ) => {
+export default ( props ) => {
+	const {
+		attributes,
+		clientId,
+		setAttributes,
+	} = props;
+
 	const { insertBlocks } = useDispatch( 'core/block-editor' );
 	const {
 		getBlockParentsByBlockName,
-		getBlockRootClientId,
 		getBlocksByClientId,
 	} = useSelect( ( select ) => select( 'core/block-editor' ), [] );
 
@@ -21,6 +31,10 @@ export default ( { clientId, attributes, setAttributes } ) => {
 		relSponsored,
 		useDynamicData,
 		dynamicLinkType,
+		display,
+		displayTablet,
+		displayMobile,
+		buttonType,
 	} = attributes;
 
 	const POPOVER_PROPS = {
@@ -28,42 +42,54 @@ export default ( { clientId, attributes, setAttributes } ) => {
 		position: 'bottom right',
 	};
 
+	const deviceType = getDeviceType();
 	const hasDynamicLink = useDynamicData && dynamicLinkType;
+	const showAppender = applyFilters( 'generateblocks.editor.showButtonAppender', true, props );
+	const showButtonLinkControl = applyFilters( 'generateblocks.editor.showButtonLinkControl', 'link' === buttonType, props );
+	const buttonContainerId = getBlockParentsByBlockName( clientId, 'generateblocks/button-container', true )[ 0 ];
 
 	return (
 		<>
 			<BlockControls>
 				<ToolbarGroup>
-					<ToolbarButton
-						className="gblocks-add-new-button"
-						icon={ plus }
-						label={ __( 'Add Button', 'generateblocks' ) }
-						onClick={ () => {
-							let parentBlockId = false;
+					{ showAppender && buttonContainerId && // Add appender when using our deprecated button-container block.
+						<ToolbarButton
+							className="gblocks-add-new-button"
+							icon={ getIcon( 'add-button' ) }
+							label={ __( 'Add Button', 'generateblocks' ) }
+							onClick={ () => {
+								const thisBlock = getBlocksByClientId( clientId )[ 0 ];
 
-							if ( typeof getBlockParentsByBlockName === 'function' ) {
-								parentBlockId = getBlockParentsByBlockName( clientId, 'generateblocks/button-container', true )[ 0 ];
-							} else {
-								parentBlockId = getBlockRootClientId( clientId );
-							}
+								const clonedBlock = cloneBlock(
+									thisBlock,
+									{
+										uniqueId: '',
+									}
+								);
 
-							const thisBlock = getBlocksByClientId( clientId )[ 0 ];
-
-							const clonedBlock = cloneBlock(
-								thisBlock,
-								{
-									uniqueId: '',
-								}
-							);
-
-							insertBlocks( clonedBlock, undefined, parentBlockId );
-						} }
-						showTooltip
-					/>
+								insertBlocks( clonedBlock, undefined, buttonContainerId );
+							} }
+							showTooltip
+						/>
+					}
 				</ToolbarGroup>
 
+				{ ! isFlexItem( { device: deviceType, display, displayTablet, displayMobile } ) &&
+					<AlignmentToolbar
+						value={ getAttribute( 'textAlign', { attributes: attributes.typography, deviceType } ) }
+						onChange={ ( value ) => {
+							setAttributes( {
+								typography: {
+									[ getAttribute( 'textAlign', { attributes: attributes.typography, deviceType }, true ) ]: value,
+								},
+							} );
+						} }
+						alignmentControls={ typographyOptions.alignments }
+					/>
+				}
+
 				<ToolbarGroup>
-					{ ( ! useDynamicData || hasDynamicLink ) &&
+					{ ( ! useDynamicData || hasDynamicLink ) && showButtonLinkControl &&
 						<Dropdown
 							contentClassName="gblocks-button-link-dropdown"
 							popoverProps={ POPOVER_PROPS }

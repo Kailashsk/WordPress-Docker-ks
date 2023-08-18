@@ -113,10 +113,10 @@ class App extends Component {
 
 								<TextControl
 									type="number"
-									label={ __( 'Default Container Width', 'generateblocks' ) }
+									label={ __( 'Global max-width', 'generateblocks' ) }
 									help={ !! generateBlocksSettings.gpContainerWidth
-										? __( 'The default width of the Container block is set by GeneratePress in the Customizer.', 'generateblocks' )
-										: __( 'The default width of the Container block.', 'generateblocks' )
+										? __( 'The global max-width is set by GeneratePress in the Customizer.', 'generateblocks' )
+										: __( 'The global max-width value you can use in your blocks.', 'generateblocks' )
 									}
 									disabled={ !! generateBlocksSettings.gpContainerWidth }
 									value={ generateBlocksSettings.gpContainerWidth || this.getSetting( 'container_width' ) }
@@ -209,6 +209,22 @@ class App extends Component {
 											settings: {
 												...this.state.settings,
 												sync_responsive_previews: value,
+											},
+										} );
+									} }
+								/>
+							</PanelRow>
+
+							<PanelRow>
+								<ToggleControl
+									label={ __( 'Disable Google Fonts', 'generateblocks' ) }
+									help={ __( 'Prevent Google Fonts from being called on your website and remove them from the font family lists.', 'generateblocks' ) }
+									checked={ this.getSetting( 'disable_google_fonts' ) }
+									onChange={ ( value ) => {
+										this.setState( {
+											settings: {
+												...this.state.settings,
+												disable_google_fonts: value,
 											},
 										} );
 									} }

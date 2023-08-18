@@ -14,10 +14,10 @@ class TermNode {
 	/**
 	 * Register the TermNode Interface
 	 *
-	 * @param TypeRegistry $type_registry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry
 	 *
 	 * @return void
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function register_type( TypeRegistry $type_registry ) {
 
@@ -28,7 +28,7 @@ class TermNode {
 				'connections' => [
 					'enqueuedScripts'     => [
 						'toType'  => 'EnqueuedScript',
-						'resolve' => function ( $source, $args, $context, $info ) {
+						'resolve' => static function ( $source, $args, $context, $info ) {
 							$resolver = new EnqueuedScriptsConnectionResolver( $source, $args, $context, $info );
 
 							return $resolver->get_connection();
@@ -36,14 +36,14 @@ class TermNode {
 					],
 					'enqueuedStylesheets' => [
 						'toType'  => 'EnqueuedStylesheet',
-						'resolve' => function ( $source, $args, $context, $info ) {
+						'resolve' => static function ( $source, $args, $context, $info ) {
 							$resolver = new EnqueuedStylesheetConnectionResolver( $source, $args, $context, $info );
 							return $resolver->get_connection();
 						},
 					],
 				],
 				'description' => __( 'Terms are nodes within a Taxonomy, used to group and relate other nodes.', 'wp-graphql' ),
-				'resolveType' => function ( $term ) use ( $type_registry ) {
+				'resolveType' => static function ( $term ) use ( $type_registry ) {
 
 					/**
 					 * The resolveType callback is used at runtime to determine what Type an object
@@ -69,7 +69,7 @@ class TermNode {
 					'databaseId'     => [
 						'type'        => [ 'non_null' => 'Int' ],
 						'description' => __( 'Identifies the primary key from the database.', 'wp-graphql' ),
-						'resolve'     => function ( Term $term, $args, $context, $info ) {
+						'resolve'     => static function ( Term $term, $args, $context, $info ) {
 							return absint( $term->term_id );
 						},
 					],

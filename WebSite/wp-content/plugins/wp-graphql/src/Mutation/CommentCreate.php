@@ -7,14 +7,13 @@ use GraphQL\Error\UserError;
 use GraphQL\Type\Definition\ResolveInfo;
 use WPGraphQL\AppContext;
 use WPGraphQL\Data\CommentMutation;
-use WPGraphQL\Data\DataSource;
 
 class CommentCreate {
 	/**
 	 * Registers the CommentCreate mutation.
 	 *
 	 * @return void
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function register_mutation() {
 		register_graphql_mutation(
@@ -88,12 +87,12 @@ class CommentCreate {
 			'comment' => [
 				'type'        => 'Comment',
 				'description' => __( 'The comment that was created', 'wp-graphql' ),
-				'resolve'     => function ( $payload, $args, AppContext $context, ResolveInfo $info ) {
+				'resolve'     => static function ( $payload, $args, AppContext $context ) {
 					if ( ! isset( $payload['id'] ) || ! absint( $payload['id'] ) ) {
 						return null;
 					}
 
-					return DataSource::resolve_comment( absint( $payload['id'] ), $context );
+					return $context->get_loader( 'comment' )->load_deferred( absint( $payload['id'] ) );
 				},
 			],
 			/**
@@ -122,7 +121,7 @@ class CommentCreate {
 	 * @return callable
 	 */
 	public static function mutate_and_get_payload() {
-		return function ( $input, AppContext $context, ResolveInfo $info ) {
+		return static function ( $input, AppContext $context, ResolveInfo $info ) {
 
 			/**
 			 * Throw an exception if there's no input

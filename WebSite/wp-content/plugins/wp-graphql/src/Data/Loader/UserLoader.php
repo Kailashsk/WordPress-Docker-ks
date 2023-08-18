@@ -15,8 +15,8 @@ class UserLoader extends AbstractDataLoader {
 	 * @param mixed $entry The User Role object
 	 * @param mixed $key The Key to identify the user role by
 	 *
-	 * @return mixed|User
-	 * @throws Exception
+	 * @return mixed|\WPGraphQL\Model\User
+	 * @throws \Exception
 	 */
 	protected function get_model( $entry, $key ) {
 		if ( $entry instanceof \WP_User ) {
@@ -116,7 +116,7 @@ class UserLoader extends AbstractDataLoader {
 	 * @param array $keys
 	 *
 	 * @return array
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public function loadKeys( array $keys ) {
 
@@ -157,7 +157,7 @@ class UserLoader extends AbstractDataLoader {
 		 */
 		return array_reduce(
 			$keys,
-			function ( $carry, $key ) use ( $public_users ) {
+			static function ( $carry, $key ) use ( $public_users ) {
 				$user = get_user_by( 'id', $key ); // Cached via previous WP_User_Query.
 
 				if ( $user instanceof \WP_User ) {

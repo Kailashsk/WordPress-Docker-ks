@@ -158,7 +158,7 @@ class GenerateBlocks_Dynamic_Content {
 		$unique_id = $attributes['uniqueId'];
 
 		// This prevents endless loops by not rendering excerpts within themselves.
-		if ( isset( self::$source_ids[ $unique_id ] ) && $source_id === self::$source_ids[ $unique_id ] ) {
+		if ( ! $source_id || ( isset( self::$source_ids[ $unique_id ] ) && $source_id === self::$source_ids[ $unique_id ] ) ) {
 			return '';
 		}
 
@@ -443,7 +443,14 @@ class GenerateBlocks_Dynamic_Content {
 			);
 			$links = paginate_links( $paginate_args );
 		} else {
-			$block_query = new WP_Query( GenerateBlocks_Query_Loop::get_query_args( $block, $page ) );
+			$query_args = apply_filters(
+				'generateblocks_query_loop_args',
+				GenerateBlocks_Query_Loop::get_query_args( $block, $page ),
+				$attributes,
+				$block
+			);
+
+			$block_query = new WP_Query( $query_args );
 
 			// `paginate_links` works with the global $wp_query, so we have to
 			// temporarily switch it with our custom query.
@@ -508,7 +515,7 @@ class GenerateBlocks_Dynamic_Content {
 			$classes = $node->getAttribute( 'class' ) ? $node->getAttribute( 'class' ) : '';
 
 			if ( $node->getAttribute( 'aria-current' ) ) {
-				$classes = str_replace( 'current', 'gb-button__current', $classes );
+				$classes = str_replace( 'current', 'gb-block-is-current', $classes );
 			}
 
 			// phpcs:ignore -- DOMDocument doesn't use snake-case.
@@ -651,7 +658,11 @@ class GenerateBlocks_Dynamic_Content {
 			}
 		}
 
-		return $id;
+		return apply_filters(
+			'generateblocks_dynamic_source_id',
+			$id,
+			$attributes
+		);
 	}
 
 	/**
@@ -842,7 +853,14 @@ class GenerateBlocks_Dynamic_Content {
 					$url = next_posts( $max_page, false );
 				}
 			} elseif ( ! $max_page || $max_page > $page ) {
-				$custom_query           = new WP_Query( GenerateBlocks_Query_Loop::get_query_args( $block, $page ) );
+				$query_args = apply_filters(
+					'generateblocks_query_loop_args',
+					GenerateBlocks_Query_Loop::get_query_args( $block, $page ),
+					$attributes,
+					$block
+				);
+
+				$custom_query           = new WP_Query( $query_args );
 				$custom_query_max_pages = (int) $custom_query->max_num_pages;
 
 				if ( $custom_query_max_pages && $custom_query_max_pages !== $page ) {
@@ -1058,6 +1076,19 @@ class GenerateBlocks_Dynamic_Content {
 				in_array( 'gb-headline-text', $classes ) ||
 				in_array( 'gb-block-image', $classes )
 			) {
+				// Captions are added dynamically in class-image.php, so we can remove
+				// the static one here if it exists.
+				if ( in_array( 'gb-block-image', $classes ) ) {
+					$figcaptions = $node->getElementsByTagName( 'figcaption' );
+
+					if ( ! empty( $figcaptions ) ) {
+						foreach ( $figcaptions as $figcaption ) {
+							// phpcs:ignore -- DOMDocument doesn't use snake-case.
+							$figcaption->parentNode->removeChild( $figcaption );
+						}
+					}
+				}
+
 				// phpcs:ignore -- DOMDocument doesn't use snake-case.
 				foreach ( $node->childNodes as $childNode ) {
 					$static_content .= $doc->saveHTML( $childNode );

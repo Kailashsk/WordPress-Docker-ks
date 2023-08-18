@@ -56,6 +56,7 @@ class IconPicker extends Component {
 			attrIconLocation,
 			locationOptions,
 			attrRemoveText,
+			id,
 		} = this.props;
 
 		let iconSVGSets = {
@@ -69,7 +70,31 @@ class IconPicker extends Component {
 			},
 		};
 
-		iconSVGSets = applyFilters( 'generateblocks.editor.iconSVGSets', iconSVGSets );
+		iconSVGSets = applyFilters( 'generateblocks.editor.iconSVGSets', iconSVGSets, { attributes } );
+
+		const flexAttributes = {};
+
+		if ( ! attributes.display.includes( 'flex' ) ) {
+			flexAttributes.display = 'headline' === id ? 'flex' : 'inline-flex';
+		}
+
+		if ( ! attributes.alignItems ) {
+			flexAttributes.alignItems = 'center';
+		}
+
+		if ( ! attributes.columnGap ) {
+			flexAttributes.columnGap = '0.5em';
+		}
+
+		const styleAttributes = {};
+
+		if ( ! attributes.iconStyles.height ) {
+			styleAttributes.height = '1em';
+		}
+
+		if ( ! attributes.iconStyles.width ) {
+			styleAttributes.width = '1em';
+		}
 
 		return (
 			<Fragment>
@@ -84,11 +109,15 @@ class IconPicker extends Component {
 
 							if ( '' !== value ) {
 								setAttributes( {
-									'hasIcon': true, // eslint-disable-line quote-props
+									hasIcon: true,
+									...flexAttributes,
+									iconStyles: {
+										...styleAttributes,
+									},
 								} );
 							} else {
 								setAttributes( {
-									'hasIcon': false, // eslint-disable-line quote-props
+									hasIcon: false,
 								} );
 							}
 						} }
@@ -121,7 +150,7 @@ class IconPicker extends Component {
 							const svgItems = iconSVGSets[ svg ].svgs;
 
 							return (
-								<PanelBody title={ iconSVGSets[ svg ].group } initialOpen={ false } key={ i }>
+								<PanelBody className="gblocks-panel-label gblocks-icon-panel" title={ iconSVGSets[ svg ].group } initialOpen={ false } key={ i }>
 									<PanelRow>
 										<BaseControl>
 											<ul className="gblocks-icon-chooser">
@@ -142,6 +171,10 @@ class IconPicker extends Component {
 																			setAttributes( {
 																				[ this.props.attrIcon ]: iconValue,
 																				hasIcon: true,
+																				...flexAttributes,
+																				iconStyles: {
+																					...styleAttributes,
+																				},
 																			} );
 																		} }
 																	>
@@ -180,59 +213,6 @@ class IconPicker extends Component {
 						value={ attributes[ attrIconLocation ] }
 						options={ locationOptions }
 						onChange={ ( value ) => {
-							const leftPadding 		= attributes.iconPaddingLeft,
-								rightPadding 		= attributes.iconPaddingRight,
-								rightPaddingTablet 	= attributes.iconPaddingRightTablet,
-								leftPaddingTablet 	= attributes.iconPaddingLeftTablet,
-								rightPaddingMobile 	= attributes.iconPaddingRightMobile,
-								leftPaddingMobile 	= attributes.iconPaddingLeftMobile;
-
-							if ( 'right' === value ) {
-								if ( ! leftPadding && rightPadding ) {
-									setAttributes( {
-										iconPaddingLeft: rightPadding,
-										iconPaddingRight: '',
-									} );
-								}
-
-								if ( ! leftPaddingTablet && rightPaddingTablet ) {
-									setAttributes( {
-										iconPaddingLeftTablet: rightPaddingTablet,
-										iconPaddingRightTablet: '',
-									} );
-								}
-
-								if ( ! leftPaddingMobile && rightPaddingMobile ) {
-									setAttributes( {
-										iconPaddingLeftMobile: rightPaddingMobile,
-										iconPaddingRightMobile: '',
-									} );
-								}
-							}
-
-							if ( 'left' === value ) {
-								if ( ! rightPadding && leftPadding ) {
-									setAttributes( {
-										iconPaddingRight: leftPadding,
-										iconPaddingLeft: '',
-									} );
-								}
-
-								if ( ! rightPaddingTablet && leftPaddingTablet ) {
-									setAttributes( {
-										iconPaddingRightTablet: leftPaddingTablet,
-										iconPaddingLeftTablet: '',
-									} );
-								}
-
-								if ( ! rightPaddingMobile && leftPaddingMobile ) {
-									setAttributes( {
-										iconPaddingRightMobile: leftPaddingMobile,
-										iconPaddingLeftMobile: '',
-									} );
-								}
-							}
-
 							setAttributes( {
 								[ this.props[ 'attrIconLocation' ] ]: value, // eslint-disable-line dot-notation
 							} );

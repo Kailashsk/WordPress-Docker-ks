@@ -13,10 +13,10 @@ class MenuItemLinkable {
 	/**
 	 * Registers the MenuItemLinkable Interface Type
 	 *
-	 * @param TypeRegistry $type_registry Instance of the WPGraphQL Type Registry
+	 * @param \WPGraphQL\Registry\TypeRegistry $type_registry Instance of the WPGraphQL Type Registry
 	 *
 	 * @return void
-	 * @throws Exception
+	 * @throws \Exception
 	 */
 	public static function register_type( TypeRegistry $type_registry ): void {
 
@@ -24,7 +24,7 @@ class MenuItemLinkable {
 			'description' => __( 'Nodes that can be linked to as Menu Items', 'wp-graphql' ),
 			'interfaces'  => [ 'Node', 'UniformResourceIdentifiable', 'DatabaseIdentifier' ],
 			'fields'      => [],
-			'resolveType' => function ( $node ) use ( $type_registry ) {
+			'resolveType' => static function ( $node ) use ( $type_registry ) {
 
 				switch ( true ) {
 					case $node instanceof Post:
